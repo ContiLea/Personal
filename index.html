@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Coffee Experience · Cata de espresso participativa en Palermo</title>
+<meta name="description" content="Una hora para entender el café que tomás todos los días. En grupo chico, preparás tres espressos manuales y catás tres orígenes, uno de ellos Kopi Luwak. Palermo, Buenos Aires.">
+<meta property="og:title" content="The Coffee Experience">
+<meta property="og:description" content="Cata de espresso participativa · Palermo, Buenos Aires. Grupos de hasta 6 personas.">
+<meta property="og:image" content="/assets/flair3.jpeg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#f2ece2">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' rx='80' fill='%23f2ece2'/%3E%3Ctext x='200' y='260' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='190' fill='%231d1511'%3ECe%3C/text%3E%3C/svg%3E">
+
+<!-- ================================================================
+     CONFIGURACIÓN DEL SITIO  (lo único que hace falta editar)
+     SHEET_URL: URL de la App web de Google Apps Script (termina en /exec).
+                Ver google-sheets/INSTRUCCIONES.md. Si queda vacía, el widget
+                de reservas no muestra horarios y ofrece reservar por WhatsApp.
+     DEMO:      true = muestra horarios de ejemplo (las reservas NO se guardan).
+                Dejar en false en producción.
+     ================================================================ -->
+<script>
+  window.TCE_CONFIG = {
+    SHEET_URL: "https://script.google.com/macros/s/AKfycbw9xEx5yRU_q8hok_cCzEbssgbf_LXJkOyYDr_xYDt_TVvVv0Myh_C4YGeWqLw7KDI/exec",
+    DEMO: false
+  };
+</script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@300;400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lenis@1.3.25/dist/lenis.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  body { margin: 0; background: #f2ece2; color: #1d1511; font-family: 'Geist', sans-serif; -webkit-font-smoothing: antialiased; }
+  ::selection { background: #1d1511; color: #f2ece2; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: #a8521f; }
+  input::placeholder { color: #9a8b7e; }
+</style>
+</helmet>
+
+<div style="background:#f2ece2; color:#1d1511; overflow-x:clip;">
+
+  <!-- NAV -->
+  <nav id="tce-nav" style="position:fixed; top:0; left:0; right:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px clamp(16px,4vw,48px); transition:background .35s, border-color .35s, backdrop-filter .35s; border-bottom:1px solid transparent;">
+    <a href="#top" style="font-family:'Instrument Serif',serif; font-size:clamp(19px,2vw,23px); line-height:1; letter-spacing:-0.01em; white-space:nowrap;">The Coffee <span style="font-style:italic;">Experience</span></a>
+    <div style="display:flex; align-items:center; gap:clamp(14px,2.4vw,32px); font-size:14px;">
+      <a href="#propuesta" style="{{ navLink }}">La experiencia</a>
+      <a href="#como-es" style="{{ navLink }}">Cómo es</a>
+      <a href="#preguntas" style="{{ navLink }}">Preguntas</a>
+      <a href="#reservar" onClick="{{ closeMenu }}" style="{{ navCta }}" style-hover="background:#a8521f; color:#f2ece2;">Reservar</a>
+      <button onClick="{{ toggleMenu }}" aria-label="{{ menuLabel }}" aria-expanded="{{ menuOpen }}" style="{{ burgerBtn }}">
+        <span style="{{ bar1 }}"></span>
+        <span style="{{ bar2 }}"></span>
+      </button>
+    </div>
+  </nav>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:49; background:#f2ece2; padding:88px clamp(16px,4vw,48px) 32px; display:flex; flex-direction:column; justify-content:space-between; overflow-y:auto;">
+      <div style="display:flex; flex-direction:column; border-top:1px solid rgba(29,21,17,0.14);">
+        <a href="#propuesta" onClick="{{ closeMenu }}" style="display:flex; align-items:center; justify-content:space-between; min-height:64px; border-bottom:1px solid rgba(29,21,17,0.14); font-family:'Instrument Serif',serif; font-size:34px; line-height:1;">La experiencia <span style="font-family:'Geist',sans-serif; font-size:18px; color:#a8521f;">→</span></a>
+        <a href="#como-es" onClick="{{ closeMenu }}" style="display:flex; align-items:center; justify-content:space-between; min-height:64px; border-bottom:1px solid rgba(29,21,17,0.14); font-family:'Instrument Serif',serif; font-size:34px; line-height:1;">Cómo es <span style="font-family:'Geist',sans-serif; font-size:18px; color:#a8521f;">→</span></a>
+        <a href="#preguntas" onClick="{{ closeMenu }}" style="display:flex; align-items:center; justify-content:space-between; min-height:64px; border-bottom:1px solid rgba(29,21,17,0.14); font-family:'Instrument Serif',serif; font-size:34px; line-height:1;">Preguntas <span style="font-family:'Geist',sans-serif; font-size:18px; color:#a8521f;">→</span></a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px; padding-top:32px;">
+        <a href="#reservar" onClick="{{ closeMenu }}" style="display:flex; align-items:center; justify-content:center; min-height:56px; background:#1d1511; color:#f2ece2; border-radius:999px; font-size:16px; font-weight:500;" style-hover="background:#a8521f; color:#f2ece2;">Reservar lugar →</a>
+        <a href="https://wa.me/543794684303" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; min-height:44px; font-size:14.5px; color:#4a3d34;">WhatsApp +54 379 468-4303</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 01 HERO -->
+  <section id="top" data-screen-label="Hero" style="padding:clamp(100px,14vh,150px) clamp(16px,4vw,48px) clamp(56px,8vw,110px);">
+    <div style="max-width:1320px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr)); gap:clamp(36px,5vw,80px); align-items:end;">
+      <div>
+        <div data-reveal="" data-reveal-delay="0" style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#7a6b5f; margin-bottom:clamp(22px,3vw,36px);">Cata de espresso participativa · Palermo, Buenos Aires</div>
+        <h1 data-reveal="" data-reveal-delay="90" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(46px,6.6vw,108px); line-height:0.96; letter-spacing:-0.022em; margin:0; text-wrap:balance;">Una hora para <span style="font-style:italic; color:#a8521f;">entender</span> el café que tomás todos los días.</h1>
+        <p data-reveal="" data-reveal-delay="180" style="font-size:clamp(16px,1.35vw,19px); line-height:1.6; color:#4a3d34; max-width:44ch; margin:clamp(24px,3vw,36px) 0 0; text-wrap:pretty;">En grupo chico, preparás con tus manos tres espressos manuales, catás tres orígenes —uno de ellos Kopi Luwak— y te vas sabiendo qué buscar en cada taza.</p>
+        <div data-reveal="" data-reveal-delay="260" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:clamp(28px,3.4vw,44px);">
+          <a href="#reservar" style="display:inline-flex; align-items:center; gap:10px; background:#1d1511; color:#f2ece2; padding:16px 26px; border-radius:999px; font-size:15px; font-weight:500;" style-hover="background:#a8521f; color:#f2ece2;">Reservar lugar <span>→</span></a>
+          <a href="#como-es" style="display:inline-flex; align-items:center; padding:15px 24px; border-radius:999px; border:1px solid rgba(29,21,17,0.22); font-size:15px;" style-hover="border-color:#a8521f; color:#a8521f;">Cómo es la hora</a>
+        </div>
+        <div data-reveal="" data-reveal-delay="340" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:clamp(40px,5vw,64px); padding-top:22px; border-top:1px solid rgba(29,21,17,0.16); max-width:520px;">
+          <div><div style="font-family:'Instrument Serif',serif; font-size:clamp(26px,2.6vw,34px); line-height:1;">60 min</div><div style="font-size:13px; color:#7a6b5f; margin-top:6px;">de experiencia</div></div>
+          <div><div style="font-family:'Instrument Serif',serif; font-size:clamp(26px,2.6vw,34px); line-height:1;">6 máx.</div><div style="font-size:13px; color:#7a6b5f; margin-top:6px;">personas por sesión</div></div>
+          <div><div style="font-family:'Instrument Serif',serif; font-size:clamp(26px,2.6vw,34px); line-height:1;">${{ priceFmt }}</div><div style="font-size:13px; color:#7a6b5f; margin-top:6px;">por persona</div></div>
+        </div>
+      </div>
+
+      <div data-reveal="" data-reveal-delay="160" style="position:relative;">
+        <div style="position:relative; aspect-ratio:4/5; max-height:80vh; width:100%; border-radius:clamp(14px,1.6vw,22px); overflow:hidden; background:#1d1511 url('assets/flair3.jpeg') center/cover;">
+          <video id="tce2-video" autoplay="" muted="" loop="" playsinline="" preload="auto" poster="assets/flair3.jpeg" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">
+            <source src="assets/hero.mp4" type="video/mp4">
+          </video>
+        </div>
+        <a href="#reservar" style="position:absolute; left:clamp(-14px,-1.4vw,-8px); bottom:clamp(18px,3vw,36px); background:#faf6ef; color:#1d1511; border-radius:14px; padding:14px 18px; box-shadow:0 18px 40px -18px rgba(29,21,17,0.45); display:flex; flex-direction:column; gap:4px; min-width:200px;" style-hover="color:#1d1511;">
+          <span style="font-family:'Geist Mono',monospace; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:#a8521f; display:flex; align-items:center; gap:8px;"><span style="width:7px; height:7px; border-radius:50%; background:#a8521f;"></span>Próxima sesión</span>
+          <span style="font-family:'Instrument Serif',serif; font-size:22px; line-height:1.1;">{{ nextLabel }}</span>
+          <span style="font-size:12.5px; color:#7a6b5f;">{{ nextSub }}</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 PROPUESTA -->
+  <section id="propuesta" data-screen-label="Propuesta" style="padding:clamp(70px,10vw,150px) clamp(16px,4vw,48px); border-top:1px solid rgba(29,21,17,0.12);">
+    <div style="max-width:1320px; margin:0 auto;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:clamp(24px,5vw,80px); align-items:end; margin-bottom:clamp(48px,7vw,100px);">
+        <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(40px,5.4vw,84px); line-height:0.98; letter-spacing:-0.02em; margin:0; text-wrap:balance;">No es una clase. <span style="font-style:italic; color:#7a6b5f;">Tampoco una cafetería.</span></h2>
+        <p data-reveal="" data-reveal-delay="100" style="font-size:clamp(16px,1.35vw,19px); line-height:1.6; color:#4a3d34; max-width:44ch; margin:0; text-wrap:pretty;">Es lo que pasa en el medio: una hora en grupo chico donde el café deja de ser automático. Lo preparás, lo comparás y lo entendés — y eso cambia cómo lo vas a tomar de acá en adelante.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); gap:clamp(32px,5vw,80px); align-items:start;">
+        <div data-reveal="" style="aspect-ratio:4/5; border-radius:clamp(14px,1.6vw,22px); background:url('assets/flair5.jpeg') center/cover; position:relative; overflow:hidden;">
+          <div style="position:absolute; left:16px; bottom:16px; font-family:'Geist Mono',monospace; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:#f2ece2; background:rgba(29,21,17,0.55); backdrop-filter:blur(6px); padding:7px 11px; border-radius:999px;">Buenos Aires, desde la ventana de la sala</div>
+        </div>
+        <div style="display:flex; flex-direction:column;">
+          <div data-reveal="" style="display:grid; grid-template-columns:56px minmax(0,1fr); gap:16px; padding:clamp(24px,3vw,36px) 0; border-top:1px solid rgba(29,21,17,0.16);">
+            <span style="font-family:'Instrument Serif',serif; font-style:italic; font-size:26px; color:#a8521f; line-height:1;">i.</span>
+            <div>
+              <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.8vw,40px); line-height:1.02; letter-spacing:-0.01em; margin:0 0 12px;">Lo hacés vos</h3>
+              <p style="font-size:16px; line-height:1.62; color:#4a3d34; margin:0; max-width:46ch;">Molés, preparás y extraés tus propios shots, con guía en cada paso. No hace falta saber nada de café: solo ganas de meter las manos.</p>
+            </div>
+          </div>
+          <div data-reveal="" style="display:grid; grid-template-columns:56px minmax(0,1fr); gap:16px; padding:clamp(24px,3vw,36px) 0; border-top:1px solid rgba(29,21,17,0.16);">
+            <span style="font-family:'Instrument Serif',serif; font-style:italic; font-size:26px; color:#a8521f; line-height:1;">ii.</span>
+            <div>
+              <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.8vw,40px); line-height:1.02; letter-spacing:-0.01em; margin:0 0 12px;">Aprendés a probar</h3>
+              <p style="font-size:16px; line-height:1.62; color:#4a3d34; margin:0; max-width:46ch;">Tres orígenes lado a lado para que distingas acidez, dulzor y cuerpo con tu propio paladar. Es la parte que te llevás a cualquier café del mundo.</p>
+            </div>
+          </div>
+          <div data-reveal="" style="display:grid; grid-template-columns:56px minmax(0,1fr); gap:16px; padding:clamp(24px,3vw,36px) 0; border-top:1px solid rgba(29,21,17,0.16);">
+            <span style="font-family:'Instrument Serif',serif; font-style:italic; font-size:26px; color:#a8521f; line-height:1;">iii.</span>
+            <div>
+              <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.8vw,40px); line-height:1.02; letter-spacing:-0.01em; margin:0 0 12px;">Probás lo que no se consigue</h3>
+              <p style="font-size:16px; line-height:1.62; color:#4a3d34; margin:0; max-width:46ch;">Una de las tres tazas es Kopi Luwak, uno de los cafés más raros del mundo. Incluido en la sesión.</p>
+            </div>
+          </div>
+          <div data-reveal="" style="display:grid; grid-template-columns:56px minmax(0,1fr); gap:16px; padding:clamp(24px,3vw,36px) 0; border-top:1px solid rgba(29,21,17,0.16); border-bottom:1px solid rgba(29,21,17,0.16);">
+            <span style="font-family:'Instrument Serif',serif; font-style:italic; font-size:26px; color:#a8521f; line-height:1;">iv.</span>
+            <div>
+              <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.8vw,40px); line-height:1.02; letter-spacing:-0.01em; margin:0 0 12px;">Lo compartís</h3>
+              <p style="font-size:16px; line-height:1.62; color:#4a3d34; margin:0; max-width:46ch;">Seis personas como máximo, charla de mesa y pastelería fresca. Un plan para ir solo, en pareja o con amigos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 CÓMO ES LA HORA -->
+  <section id="como-es" data-screen-label="Cómo es" style="background:#e9e1d4; padding:clamp(70px,10vw,150px) clamp(16px,4vw,48px);">
+    <div style="max-width:1320px; margin:0 auto;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:clamp(40px,6vw,80px);">
+        <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(40px,5.4vw,84px); line-height:0.98; letter-spacing:-0.02em; margin:0;">Cómo es <span style="font-style:italic;">la hora</span></h2>
+        <p data-reveal="" style="font-size:16px; line-height:1.6; color:#4a3d34; max-width:36ch; margin:0;">Cuatro momentos, de la bolsa de granos a la última taza.</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns:{{ agendaCols }}; gap:clamp(32px,5vw,80px); align-items:start;">
+        <div style="{{ stickyCol }}">
+          <div style="position:relative; aspect-ratio:4/5; max-height:76vh; border-radius:clamp(14px,1.6vw,22px); overflow:hidden; background:#1d1511;">
+            <div data-agimg="" style="position:absolute; inset:0; background:url('assets/flair4.jpeg') center/cover; opacity:1; transition:opacity .7s ease, transform 1.2s ease;"></div>
+            <div data-agimg="" style="position:absolute; inset:0; background:url('assets/flair1.jpeg') center/cover; opacity:0; transform:scale(1.04); transition:opacity .7s ease, transform 1.2s ease;"></div>
+            <div data-agimg="" style="position:absolute; inset:0; background:url('assets/flair3.jpeg') center/cover; opacity:0; transform:scale(1.04); transition:opacity .7s ease, transform 1.2s ease;"></div>
+            <div data-agimg="" style="position:absolute; inset:0; background:url('assets/flair6.jpeg') center/cover; opacity:0; transform:scale(1.04); transition:opacity .7s ease, transform 1.2s ease;"></div>
+            <div style="position:absolute; right:16px; bottom:16px; font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.08em; color:#f2ece2; background:rgba(29,21,17,0.55); backdrop-filter:blur(6px); padding:7px 11px; border-radius:999px;"><span id="ag-count">01</span> / 04</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column;">
+          <div data-step="" style="{{ stepBox }}">
+            <div style="{{ inlineImg }}"><div style="width:100%; aspect-ratio:4/3; border-radius:16px; background:#1d1511 url('assets/flair4.jpeg') center/cover;"></div></div>
+            <div style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#a8521f; margin-bottom:14px;">01 — Al llegar</div>
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(32px,3.6vw,54px); line-height:1; letter-spacing:-0.015em; margin:0 0 16px;">Conocés los tres cafés</h3>
+            <p style="font-size:17px; line-height:1.62; color:#4a3d34; margin:0; max-width:42ch;">Te contamos de dónde viene cada uno y qué vas a buscar en la taza. Arrancamos por lo más simple: oler los granos.</p>
+          </div>
+          <div data-step="" style="{{ stepBox }}">
+            <div style="{{ inlineImg }}"><div style="width:100%; aspect-ratio:4/3; border-radius:16px; background:#1d1511 url('assets/flair1.jpeg') center/cover;"></div></div>
+            <div style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#a8521f; margin-bottom:14px;">02 — Manos a la obra</div>
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(32px,3.6vw,54px); line-height:1; letter-spacing:-0.015em; margin:0 0 16px;">Molés y preparás</h3>
+            <p style="font-size:17px; line-height:1.62; color:#4a3d34; margin:0; max-width:42ch;">Pesás la dosis, molés y armás la canasta. Es el paso que nadie ve en una cafetería, y el que más define el sabor.</p>
+          </div>
+          <div data-step="" style="{{ stepBox }}">
+            <div style="{{ inlineImg }}"><div style="width:100%; aspect-ratio:4/3; border-radius:16px; background:#1d1511 url('assets/flair3.jpeg') center/cover;"></div></div>
+            <div style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#a8521f; margin-bottom:14px;">03 — Tu shot</div>
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(32px,3.6vw,54px); line-height:1; letter-spacing:-0.015em; margin:0 0 16px;">Extraés tu espresso</h3>
+            <p style="font-size:17px; line-height:1.62; color:#4a3d34; margin:0; max-width:42ch;">A mano, en una Flair 58+ — una de las dos que hay en el país. Sin motor ni botones: la presión la ponés vos y ves cómo cambia el resultado.</p>
+          </div>
+          <div data-step="" style="{{ stepBox }}">
+            <div style="{{ inlineImg }}"><div style="width:100%; aspect-ratio:4/3; border-radius:16px; background:#1d1511 url('assets/flair6.jpeg') center/cover;"></div></div>
+            <div style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#a8521f; margin-bottom:14px;">04 — La cata</div>
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(32px,3.6vw,54px); line-height:1; letter-spacing:-0.015em; margin:0 0 16px;">Comparás y charlamos</h3>
+            <p style="font-size:17px; line-height:1.62; color:#4a3d34; margin:0; max-width:42ch;">Las tres tazas lado a lado, con pastelería fresca. Cerramos con preguntas y recomendaciones para seguir en casa.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 KOPI LUWAK -->
+  <section id="luwak" data-screen-label="Kopi Luwak" style="background:#1d1511; color:#efe6d8; padding:clamp(80px,11vw,170px) clamp(16px,4vw,48px);">
+    <div style="max-width:1320px; margin:0 auto;">
+      <div data-reveal="" style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#d99a5b; margin-bottom:clamp(20px,3vw,32px);">Incluido en tu sesión</div>
+      <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-style:italic; font-size:clamp(68px,13vw,220px); line-height:0.86; letter-spacing:-0.03em; margin:0 0 clamp(40px,6vw,80px);">Kopi Luwak</h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr)); gap:clamp(32px,5vw,80px); align-items:start;">
+        <p data-reveal="" style="font-family:'Instrument Serif',serif; font-size:clamp(24px,2.4vw,34px); line-height:1.25; margin:0; max-width:26ch; text-wrap:pretty;">Uno de los cafés más raros y caros del mundo. Lo servimos al lado de otros dos orígenes para que lo pruebes en contexto y saques tus propias conclusiones.</p>
+        <div data-reveal="" style="display:flex; flex-direction:column;">
+          <div style="display:grid; grid-template-columns:minmax(0,150px) minmax(0,1fr); gap:20px; padding:18px 0; border-top:1px solid rgba(239,230,216,0.18);">
+            <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#b5a796;">Origen</span>
+            <span style="font-size:16px; line-height:1.55;">Islas de Indonesia</span>
+          </div>
+          <div style="display:grid; grid-template-columns:minmax(0,150px) minmax(0,1fr); gap:20px; padding:18px 0; border-top:1px solid rgba(239,230,216,0.18);">
+            <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#b5a796;">Producción</span>
+            <span style="font-size:16px; line-height:1.55;">Cantidades mínimas, en lotes chicos que se terminan</span>
+          </div>
+          <div style="display:grid; grid-template-columns:minmax(0,150px) minmax(0,1fr); gap:20px; padding:18px 0; border-top:1px solid rgba(239,230,216,0.18);">
+            <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#b5a796;">En tu sesión</span>
+            <span style="font-size:16px; line-height:1.55;">1 de las 3 tazas, sin cargo extra</span>
+          </div>
+          <div style="display:grid; grid-template-columns:minmax(0,150px) minmax(0,1fr); gap:20px; padding:18px 0; border-top:1px solid rgba(239,230,216,0.18); border-bottom:1px solid rgba(239,230,216,0.18);">
+            <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:#b5a796;">Disponibilidad</span>
+            <span style="font-size:16px; line-height:1.55;">Sujeta a stock</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 PARA QUIÉN -->
+  <section data-screen-label="Para quién" style="padding:clamp(70px,10vw,150px) clamp(16px,4vw,48px);">
+    <div style="max-width:1320px; margin:0 auto;">
+      <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(40px,5.4vw,84px); line-height:0.98; letter-spacing:-0.02em; margin:0 0 clamp(40px,6vw,72px);">Un plan <span style="font-style:italic;">para…</span></h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:clamp(14px,1.6vw,22px);">
+        <div data-reveal="" style="background:#faf6ef; border-radius:clamp(14px,1.6vw,22px); padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:16px; min-height:300px;">
+          <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#a8521f;">Vos</span>
+          <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.6vw,38px); line-height:1.05; margin:0;">Si te gusta el café y querés ir más allá</h3>
+          <p style="font-size:16px; line-height:1.6; color:#4a3d34; margin:0;">Para dejar de pedir “un cortado” por costumbre y empezar a elegir. Podés venir solo: las sesiones son compartidas.</p>
+        </div>
+        <div data-reveal="" data-reveal-delay="80" style="background:#faf6ef; border-radius:clamp(14px,1.6vw,22px); padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:16px; min-height:300px;">
+          <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#a8521f;">Regalar</span>
+          <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.6vw,38px); line-height:1.05; margin:0;">Una experiencia en vez de un objeto</h3>
+          <p style="font-size:16px; line-height:1.6; color:#4a3d34; margin:0;">Reservás vos, la vive quien quieras. Ideal para el que ya tiene todo menos una buena historia de café.</p>
+        </div>
+        <div data-reveal="" data-reveal-delay="160" style="background:#1d1511; color:#efe6d8; border-radius:clamp(14px,1.6vw,22px); padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:16px; min-height:300px;">
+          <span style="font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#d99a5b;">Grupos y empresas</span>
+          <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,2.6vw,38px); line-height:1.05; margin:0;">Más de 6, cumpleaños o eventos de marca</h3>
+          <p style="font-size:16px; line-height:1.6; color:#c9bcab; margin:0;">Sesiones privadas a medida, en nuestra sala o donde nos digas.</p>
+          <a href="https://wa.me/543794684303?text=Hola%2C%20quiero%20consultar%20por%20un%20grupo%20o%20evento" target="_blank" rel="noopener" style="margin-top:auto; align-self:flex-start; background:#efe6d8; color:#1d1511; padding:13px 20px; border-radius:999px; font-size:14.5px; font-weight:500;" style-hover="background:#d99a5b; color:#1d1511;">Consultar por WhatsApp →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 RESERVAR -->
+  <section id="reservar" data-screen-label="Reservar" style="padding:clamp(40px,6vw,90px) clamp(16px,4vw,48px) clamp(70px,10vw,150px);">
+    <div style="max-width:1320px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); gap:clamp(32px,5vw,80px); align-items:start;">
+      <div>
+        <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(44px,6vw,96px); line-height:0.95; letter-spacing:-0.02em; margin:0 0 24px;">Reservá <span style="font-style:italic; color:#a8521f;">tu lugar</span></h2>
+        <p data-reveal="" style="font-size:clamp(16px,1.3vw,18px); line-height:1.6; color:#4a3d34; max-width:40ch; margin:0 0 clamp(28px,4vw,44px);">Elegí fecha y horario. Te confirmamos por WhatsApp con la dirección exacta en Palermo.</p>
+        <div data-reveal="" style="display:flex; flex-direction:column; gap:0; border-top:1px solid rgba(29,21,17,0.16); max-width:480px;">
+          <div style="display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid rgba(29,21,17,0.16); font-size:15.5px;"><span>3 espressos de origen único, hechos por vos</span><span style="color:#7a6b5f;">✓</span></div>
+          <div style="display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid rgba(29,21,17,0.16); font-size:15.5px;"><span>Kopi Luwak</span><span style="color:#7a6b5f;">✓</span></div>
+          <div style="display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid rgba(29,21,17,0.16); font-size:15.5px;"><span>Guía durante toda la sesión</span><span style="color:#7a6b5f;">✓</span></div>
+          <div style="display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid rgba(29,21,17,0.16); font-size:15.5px;"><span>Pastelería fresca</span><span style="color:#7a6b5f;">✓</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:20px 0 0;">
+            <span style="font-family:'Instrument Serif',serif; font-size:clamp(40px,4.4vw,60px); line-height:1;">${{ priceFmt }}</span>
+            <span style="font-size:14px; color:#7a6b5f;">por persona · todo incluido</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#faf6ef; border-radius:clamp(16px,1.8vw,24px); padding:clamp(22px,3vw,40px); box-shadow:0 30px 60px -40px rgba(29,21,17,0.35);">
+        <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:48px 0; font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#7a6b5f;">Cargando horarios…</div>
+        </sc-if>
+
+        <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <p style="font-size:16px; line-height:1.6; color:#4a3d34; margin:0;">No pudimos cargar los horarios disponibles. Probá de nuevo o reservá directo por WhatsApp.</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button onClick="{{ retry }}" style="background:transparent; border:1px solid rgba(29,21,17,0.24); color:#1d1511; padding:13px 20px; border-radius:999px; font-family:'Geist',sans-serif; font-size:14.5px; cursor:pointer;" style-hover="border-color:#a8521f; color:#a8521f;">Reintentar</button>
+              <a href="https://wa.me/543794684303?text=Hola%2C%20quiero%20reservar%20una%20sesi%C3%B3n" target="_blank" rel="noopener" style="background:#1d1511; color:#f2ece2; padding:13px 20px; border-radius:999px; font-size:14.5px; font-weight:500;" style-hover="background:#a8521f; color:#f2ece2;">WhatsApp →</a>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,3vw,40px); line-height:1.05; margin:0;">Estamos armando el próximo calendario</h3>
+            <p style="font-size:16px; line-height:1.6; color:#4a3d34; margin:0;">Escribinos y te avisamos apenas abramos fechas.</p>
+            <a href="https://wa.me/543794684303?text=Hola%2C%20av%C3%ADsenme%20cuando%20abran%20fechas" target="_blank" rel="noopener" style="align-self:flex-start; background:#1d1511; color:#f2ece2; padding:13px 20px; border-radius:999px; font-size:14.5px; font-weight:500;" style-hover="background:#a8521f; color:#f2ece2;">Avisame por WhatsApp →</a>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showNotConfigured }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(28px,3vw,40px); line-height:1.05; margin:0;">Reservá por WhatsApp</h3>
+            <p style="font-size:16px; line-height:1.6; color:#4a3d34; margin:0;">Escribinos con la fecha y la cantidad de personas y te confirmamos el lugar.</p>
+            <a href="https://wa.me/543794684303?text=Hola%2C%20quiero%20reservar%20una%20sesi%C3%B3n" target="_blank" rel="noopener" style="align-self:flex-start; background:#1d1511; color:#f2ece2; padding:13px 20px; border-radius:999px; font-size:14.5px; font-weight:500;" style-hover="background:#a8521f; color:#f2ece2;">Reservar por WhatsApp →</a>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPick }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="font-size:14px; font-weight:500; margin-bottom:12px;">Fecha</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:26px;">
+              <sc-for list="{{ datesView }}" as="d" hint-placeholder-count="5">
+                <div onClick="{{ d.onClick }}" style="{{ d.wrap }}">
+                  <span style="font-family:'Geist Mono',monospace; font-size:10.5px; letter-spacing:0.06em; opacity:0.75;">{{ d.dow }}</span>
+                  <span style="font-family:'Instrument Serif',serif; font-size:28px; line-height:1;">{{ d.day }}</span>
+                  <span style="font-family:'Geist Mono',monospace; font-size:10.5px; letter-spacing:0.06em; opacity:0.75;">{{ d.mon }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="font-size:14px; font-weight:500; margin-bottom:12px;">Horario</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:26px;">
+              <sc-for list="{{ timesView }}" as="t" hint-placeholder-count="3">
+                <div onClick="{{ t.onClick }}" style="{{ t.wrap }}">
+                  <span style="font-size:16px; font-weight:500;">{{ t.time }}</span>
+                  <span style="font-size:11.5px; opacity:0.75;">{{ t.tag }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:26px;">
+              <div>
+                <div style="font-size:14px; font-weight:500;">Personas</div>
+                <div style="font-size:12.5px; color:#7a6b5f; margin-top:2px;">Hasta {{ maxLabel }} en este horario</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; border:1px solid rgba(29,21,17,0.18); border-radius:999px; padding:4px;">
+                <button onClick="{{ dec }}" aria-label="Menos" style="width:42px; height:42px; border-radius:50%; border:none; background:transparent; color:#1d1511; font-size:20px; cursor:pointer;" style-hover="background:#ece4d7;">−</button>
+                <span style="font-family:'Instrument Serif',serif; font-size:28px; min-width:32px; text-align:center;">{{ guests }}</span>
+                <button onClick="{{ inc }}" aria-label="Más" style="width:42px; height:42px; border-radius:50%; border:none; background:transparent; color:#1d1511; font-size:20px; cursor:pointer;" style-hover="background:#ece4d7;">+</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; padding-top:20px; border-top:1px solid rgba(29,21,17,0.14); margin-bottom:18px;">
+              <span style="font-size:13.5px; color:#7a6b5f; max-width:26ch;">{{ summaryLine }}</span>
+              <span style="font-family:'Instrument Serif',serif; font-size:36px; line-height:1;">${{ totalFmt }}</span>
+            </div>
+            <button onClick="{{ toContact }}" style="width:100%; padding:18px; border:none; border-radius:999px; background:#1d1511; color:#f2ece2; font-family:'Geist',sans-serif; font-size:15.5px; font-weight:500; cursor:pointer;" style-hover="background:#a8521f;">Continuar →</button>
+            <div style="text-align:center; font-size:12.5px; color:#7a6b5f; margin-top:12px;">Sin cargo hoy · te confirmamos por WhatsApp</div>
+            <sc-if value="{{ isDemo }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center; font-family:'Geist Mono',monospace; font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:#a8521f; margin-top:8px;">Modo demo · las reservas no se guardan</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <button onClick="{{ toPick }}" style="{{ backBtn }}" style-hover="color:#a8521f;">← Cambiar horario</button>
+            <div style="background:#efe7da; border-radius:14px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+              <span style="font-size:14px; color:#4a3d34;">{{ summaryLine }}</span>
+              <span style="font-family:'Instrument Serif',serif; font-size:26px;">${{ totalFmt }}</span>
+            </div>
+            <label style="display:flex; flex-direction:column; gap:7px;">
+              <span style="font-size:14px; font-weight:500;">Nombre y apellido</span>
+              <input type="text" autocomplete="name" value="{{ nameVal }}" onChange="{{ onName }}" style="width:100%; background:#ffffff; border:1px solid rgba(29,21,17,0.18); border-radius:12px; color:#1d1511; padding:14px 16px; font-family:'Geist',sans-serif; font-size:16px; outline:none;" style-focus="border-color:#a8521f;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:7px;">
+              <span style="font-size:14px; font-weight:500;">WhatsApp</span>
+              <input type="tel" autocomplete="tel" placeholder="+54 9 11 …" value="{{ phoneVal }}" onChange="{{ onPhone }}" style="width:100%; background:#ffffff; border:1px solid rgba(29,21,17,0.18); border-radius:12px; color:#1d1511; padding:14px 16px; font-family:'Geist',sans-serif; font-size:16px; outline:none;" style-focus="border-color:#a8521f;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:7px;">
+              <span style="font-size:14px; font-weight:500;">Email <span style="font-weight:400; color:#7a6b5f;">(opcional)</span></span>
+              <input type="email" autocomplete="email" value="{{ emailVal }}" onChange="{{ onEmail }}" style="width:100%; background:#ffffff; border:1px solid rgba(29,21,17,0.18); border-radius:12px; color:#1d1511; padding:14px 16px; font-family:'Geist',sans-serif; font-size:16px; outline:none;" style-focus="border-color:#a8521f;">
+            </label>
+            <sc-if value="{{ hasFormError }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#f6e1d6; color:#8a3413; border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5;">{{ formError }}</div>
+            </sc-if>
+            <button onClick="{{ submit }}" style="{{ submitStyle }}">{{ submitLabel }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#a8521f; margin-bottom:16px;">Lugar guardado</div>
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(34px,3.6vw,50px); line-height:1; margin:0 0 26px;">Gracias, {{ confirmName }}. <span style="font-style:italic;">Te esperamos.</span></h3>
+            <div style="display:flex; flex-direction:column; border-top:1px solid rgba(29,21,17,0.14); font-size:15px;">
+              <div style="display:flex; justify-content:space-between; gap:20px; padding:12px 0; border-bottom:1px solid rgba(29,21,17,0.1);"><span style="color:#7a6b5f;">Fecha</span><span>{{ confirmDate }}</span></div>
+              <div style="display:flex; justify-content:space-between; gap:20px; padding:12px 0; border-bottom:1px solid rgba(29,21,17,0.1);"><span style="color:#7a6b5f;">Horario</span><span>{{ confirmTime }}</span></div>
+              <div style="display:flex; justify-content:space-between; gap:20px; padding:12px 0; border-bottom:1px solid rgba(29,21,17,0.1);"><span style="color:#7a6b5f;">Personas</span><span>{{ confirmSeats }}</span></div>
+              <div style="display:flex; justify-content:space-between; gap:20px; padding:12px 0;"><span style="color:#7a6b5f;">Total</span><span style="font-weight:500;">${{ confirmTotal }}</span></div>
+            </div>
+            <p style="font-size:15px; line-height:1.6; color:#4a3d34; margin:20px 0;">Te escribimos por WhatsApp con la dirección exacta y cómo llegar.</p>
+            <button onClick="{{ reset }}" style="background:transparent; border:1px solid rgba(29,21,17,0.24); color:#1d1511; padding:13px 20px; border-radius:999px; font-family:'Geist',sans-serif; font-size:14.5px; cursor:pointer;" style-hover="border-color:#a8521f; color:#a8521f;">Hacer otra reserva</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 PREGUNTAS -->
+  <section id="preguntas" data-screen-label="Preguntas" style="background:#e9e1d4; padding:clamp(70px,10vw,140px) clamp(16px,4vw,48px);">
+    <div style="max-width:1320px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:clamp(28px,5vw,80px); align-items:start;">
+      <h2 data-reveal="" style="font-family:'Instrument Serif',serif; font-weight:400; font-size:clamp(40px,5.4vw,84px); line-height:0.98; letter-spacing:-0.02em; margin:0;">Preguntas <span style="font-style:italic;">frecuentes</span></h2>
+      <div style="display:flex; flex-direction:column; border-top:1px solid rgba(29,21,17,0.18);">
+        <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="4">
+          <div style="border-bottom:1px solid rgba(29,21,17,0.18);">
+            <button onClick="{{ q.onClick }}" style="width:100%; display:flex; justify-content:space-between; align-items:center; gap:20px; padding:22px 0; background:transparent; border:none; color:#1d1511; cursor:pointer; text-align:left; font-family:'Instrument Serif',serif; font-size:clamp(22px,2vw,28px); line-height:1.15;" style-hover="color:#a8521f;">
+              <span>{{ q.q }}</span>
+              <span style="{{ q.sign }}">+</span>
+            </button>
+            <div style="{{ q.wrap }}">
+              <div style="overflow:hidden;">
+                <p style="font-size:16px; line-height:1.62; color:#4a3d34; margin:0 0 22px; max-width:52ch;">{{ q.a }}</p>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="background:#1d1511; color:#efe6d8; padding:clamp(60px,8vw,110px) clamp(16px,4vw,48px) 28px;">
+    <div style="max-width:1320px; margin:0 auto;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:clamp(28px,4vw,60px); align-items:end; margin-bottom:clamp(50px,7vw,90px);">
+        <div style="font-family:'Instrument Serif',serif; font-size:clamp(48px,7vw,112px); line-height:0.92; letter-spacing:-0.02em;">The Coffee<br><span style="font-style:italic; color:#d99a5b;">Experience</span></div>
+        <div style="display:flex; gap:clamp(28px,4vw,64px); flex-wrap:wrap; justify-content:flex-end; font-size:15px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span style="font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#b5a796;">Dónde</span>
+            <span>Palermo, Buenos Aires</span>
+            <span style="color:#b5a796;">Solo con reserva</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span style="font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#b5a796;">Contacto</span>
+            <a href="https://wa.me/543794684303" target="_blank" rel="noopener" style="{{ tapLink }}" style-hover="color:#d99a5b;">WhatsApp +54 379 468-4303</a>
+            <a href="https://instagram.com/the.coffeeexperience" target="_blank" rel="noopener" style="{{ tapLink }}" style-hover="color:#d99a5b;">@the.coffeeexperience</a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:20px; border-top:1px solid rgba(239,230,216,0.16); font-size:13px; color:#b5a796;">
+        <span>© 2026 The Coffee Experience</span>
+        <a href="#top" style="{{ tapLink }}" style-hover="color:#d99a5b;">Volver arriba ↑</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;sheetUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Reserva&quot;,&quot;label&quot;:&quot;URL de Google Sheet (Apps Script /exec)&quot;},&quot;sessionPrice&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:35000,&quot;tsType&quot;:&quot;number&quot;,&quot;unit&quot;:&quot;$&quot;,&quot;section&quot;:&quot;Reserva&quot;,&quot;label&quot;:&quot;Precio (si no hay Sheet)&quot;},&quot;maxGuests&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;min&quot;:1,&quot;max&quot;:12,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Reserva&quot;,&quot;label&quot;:&quot;Máx. por reserva (si no hay Sheet)&quot;},&quot;smoothScroll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scroll&quot;}}">
+class Component extends DCLogic {
+  state = {
+    narrow: false, guests: 2, selectedDay: null, selectedId: null,
+    sessions: null, loading: true, loadError: false, notConfigured: false, demo: false, price: null, maxPer: null,
+    step: 'pick', name: '', phone: '', email: '', formError: '', submitting: false, confirm: null,
+    openFaq: 0, menuOpen: false,
+  };
+
+  setMenu(open) {
+    const l = window.__tce2Lenis;
+    if (l) { if (open) l.stop(); else l.start(); }
+    this.setState({ menuOpen: open });
+  }
+  toggleMenu = () => this.setMenu(!this.state.menuOpen);
+  closeMenu = () => { if (this.state.menuOpen) this.setMenu(false); };
+
+  faqData = [
+    { q: '¿Necesito saber de café?', a: 'No. La sesión está pensada para cualquiera que tenga curiosidad. Te guiamos en cada paso y vas a tu ritmo.' },
+    { q: '¿Puedo ir solo?', a: 'Sí. Las sesiones son compartidas, de hasta 6 personas, así que es normal llegar solo y terminar charlando con la mesa.' },
+    { q: '¿Dónde es?', a: 'En Palermo, Buenos Aires. Al confirmar tu reserva te mandamos la dirección exacta por WhatsApp.' },
+    { q: 'Somos más de 6 o es para un evento', a: 'Armamos sesiones privadas para grupos, cumpleaños y empresas. Escribinos por WhatsApp al +54 379 468-4303 y lo coordinamos.' },
+  ];
+
+  componentDidMount() {
+    this.onResize();
+    const v = document.getElementById('tce2-video');
+    if (v) { v.muted = true; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+
+    if (window.Lenis && !window.__tce2Lenis && this.props.smoothScroll !== false) {
+      window.__tce2Lenis = new window.Lenis({ autoRaf: true, lerp: 0.09, anchors: { offset: -70 } });
+    }
+    window.__tce2fn = this.onScroll;
+    window.__tce2resize = this.onResize;
+    if (!window.__tce2bound) {
+      window.__tce2bound = true;
+      window.addEventListener('scroll', () => window.__tce2fn && window.__tce2fn(), { passive: true });
+      window.addEventListener('resize', () => { window.__tce2resize && window.__tce2resize(); window.__tce2fn && window.__tce2fn(); });
+    }
+    this.setupReveal();
+    setTimeout(() => this.setupReveal(), 600);
+    this.onScroll();
+    this.loadSessions();
+  }
+
+  componentDidUpdate(prev) {
+    if ((prev.sheetUrl || '') !== (this.props.sheetUrl || '')) this.loadSessions();
+  }
+
+  onResize = () => {
+    const n = window.innerWidth < 860;
+    if (n !== this.state.narrow) {
+      if (!n && this.state.menuOpen) this.setMenu(false);
+      this.setState({ narrow: n }, () => { this.activeStep = -1; this.onScroll(); });
+    }
+  };
+
+  setupReveal() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+    if (!window.__tce2io) {
+      window.__tce2io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const el = e.target;
+          el.style.transitionDelay = (el.getAttribute('data-reveal-delay') || 0) + 'ms';
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+          window.__tce2io.unobserve(el);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+    }
+    document.querySelectorAll('[data-reveal]').forEach((el) => {
+      if (el.__rv) return;
+      el.__rv = true;
+      el.style.opacity = '0';
+      el.style.transform = 'translate3d(0,26px,0)';
+      el.style.transition = 'opacity 1s cubic-bezier(.2,.7,.2,1), transform 1s cubic-bezier(.2,.7,.2,1)';
+      window.__tce2io.observe(el);
+    });
+  }
+
+  onScroll = () => {
+    if (this.ticking) return;
+    this.ticking = true;
+    requestAnimationFrame(() => {
+      this.ticking = false;
+      const nav = document.getElementById('tce-nav');
+      if (nav) {
+        const on = (window.scrollY || 0) > 30;
+        nav.style.background = on ? 'rgba(242,236,226,0.86)' : 'transparent';
+        nav.style.backdropFilter = on ? 'blur(12px)' : 'none';
+        nav.style.borderBottomColor = on ? 'rgba(29,21,17,0.1)' : 'transparent';
+      }
+      const steps = document.querySelectorAll('[data-step]');
+      if (!steps.length) return;
+      const mid = window.innerHeight * 0.5;
+      let best = 0, bd = Infinity;
+      steps.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        const d = Math.abs(r.top + r.height / 2 - mid);
+        if (d < bd) { bd = d; best = i; }
+      });
+      if (best === this.activeStep) return;
+      this.activeStep = best;
+      const narrow = window.innerWidth < 860;
+      document.querySelectorAll('[data-agimg]').forEach((im, i) => {
+        im.style.opacity = i === best ? '1' : '0';
+        im.style.transform = i === best ? 'scale(1)' : 'scale(1.04)';
+      });
+      steps.forEach((s, i) => {
+        s.style.opacity = narrow || i === best ? '1' : '0.32';
+      });
+      const c = document.getElementById('ag-count');
+      if (c) c.textContent = String(best + 1).padStart(2, '0');
+    });
+  };
+
+  // ---------- reservas (Google Sheets vía Apps Script) ----------
+  // La URL se configura en window.TCE_CONFIG.SHEET_URL (bloque de configuración al inicio de index.html).
+  cfg() { return window.TCE_CONFIG || {}; }
+  sheetUrl() { return String(this.cfg().SHEET_URL || this.props.sheetUrl || '').trim(); }
+
+  loadSessions = async () => {
+    const url = this.sheetUrl();
+    if (!url) {
+      if (this.cfg().DEMO) { this.applyData({ sessions: this.demoSessions() }, true); return; }
+      this.setState({ loading: false, loadError: false, notConfigured: true, sessions: null, demo: false });
+      return;
+    }
+    this.setState({ loading: true, loadError: false, notConfigured: false });
+    try {
+      const r = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { method: 'GET', redirect: 'follow' });
+      const d = await r.json();
+      if (!d || d.ok === false) throw new Error((d && d.error) || 'sheet');
+      this.applyData(d, false);
+    } catch (err) {
+      this.setState({ loading: false, loadError: true });
+    }
+  };
+
+  applyData(d, demo) {
+    const sessions = (d.sessions || []).map((x) => ({
+      id: x.id || x.date + '_' + x.time, date: x.date, time: x.time,
+      capacity: Number(x.capacity) || 0, available: Math.max(0, Number(x.available) || 0),
+    }));
+    this.setState((st) => {
+      const keep = sessions.find((x) => x.id === st.selectedId && x.available > 0);
+      const first = keep || sessions.find((x) => x.available > 0) || null;
+      return {
+        sessions, demo, loading: false, loadError: false, notConfigured: false,
+        price: Number(d.price) || null, maxPer: Number(d.maxPerBooking) || null,
+        selectedId: first ? first.id : null,
+        selectedDay: first ? first.date : (sessions[0] ? sessions[0].date : null),
+      };
+    });
+  }
+
+  demoSessions() {
+    const out = [], d = new Date();
+    d.setDate(d.getDate() + (((6 - d.getDay()) + 7) % 7 || 7));
+    const times = ['11:30', '17:00', '19:30'];
+    for (let w = 0; w < 5; w++) {
+      const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      times.forEach((t, j) => {
+        const booked = w === 0 && j === 1 ? 6 : (w * 3 + j * 5) % 6;
+        out.push({ id: iso + '_' + t, date: iso, time: t, capacity: 6, available: 6 - booked });
+      });
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }
+
+  DOW = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+  DOWS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  DOWF = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  MON = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+  MONF = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  dayInfo(iso) {
+    const [y, m, d] = String(iso).split('-').map(Number);
+    const dt = new Date(y, (m || 1) - 1, d || 1), w = dt.getDay();
+    return {
+      dow: this.DOW[w], day: String(d).padStart(2, '0'), mon: this.MON[m - 1],
+      short: this.DOWS[w] + ' ' + d + ' ' + this.MONF[m - 1].slice(0, 3),
+      full: this.DOWF[w] + ' ' + d + ' de ' + this.MONF[m - 1],
+    };
+  }
+
+  fmt(n) { return Number(n).toLocaleString('es-AR'); }
+  maxPer() { return this.state.maxPer ?? this.props.maxGuests ?? 6; }
+  seatLabel(n) { return n === 1 ? '1 persona' : n + ' personas'; }
+
+  selectDay = (date) => {
+    const s = (this.state.sessions || []).find((x) => x.date === date && x.available > 0);
+    this.setState({ selectedDay: date, selectedId: s ? s.id : null });
+  };
+  selectSession = (s) => { if (s.available > 0) this.setState({ selectedId: s.id }); };
+  inc = () => this.setState((st) => ({ guests: Math.min(this.curMax || 1, st.guests + 1) }));
+  dec = () => this.setState((st) => ({ guests: Math.max(1, Math.min(this.curMax || 1, st.guests) - 1) }));
+  toContact = () => { if (this.cur) this.setState({ step: 'contact', formError: '' }); };
+  toPick = () => this.setState({ step: 'pick', formError: '' });
+  onName = (e) => this.setState({ name: e.target.value });
+  onPhone = (e) => this.setState({ phone: e.target.value });
+  onEmail = (e) => this.setState({ email: e.target.value });
+  retry = () => this.loadSessions();
+  reset = () => { this.setState({ step: 'pick', confirm: null }); this.loadSessions(); };
+
+  submit = async () => {
+    if (this.state.submitting) return;
+    const name = this.state.name.trim(), phone = this.state.phone.trim(), email = this.state.email.trim();
+    if (name.length < 2) return this.setState({ formError: 'Ingresá tu nombre.' });
+    if (phone.replace(/\D/g, '').length < 8) return this.setState({ formError: 'Ingresá un WhatsApp válido, con código de área.' });
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) return this.setState({ formError: 'Revisá el email (o dejalo vacío).' });
+    const s = this.cur, guests = this.curGuests, price = this.curPrice;
+    if (!s) return this.setState({ step: 'pick' });
+
+    const confirm = {
+      name: name.split(' ')[0], date: this.dayInfo(s.date).full, time: s.time,
+      seats: this.seatLabel(guests), total: this.fmt(price * guests),
+    };
+
+    if (this.state.demo) {
+      const sessions = this.state.sessions.map((x) => x.id === s.id ? { ...x, available: x.available - guests } : x);
+      this.setState({ sessions, step: 'done', confirm, formError: '' });
+      return;
+    }
+
+    if (!this.sheetUrl()) {
+      return this.setState({ formError: 'Las reservas online no están disponibles en este momento. Escribinos por WhatsApp al +54 379 468-4303.' });
+    }
+
+    this.setState({ submitting: true, formError: '' });
+    try {
+      // text/plain = "simple request": Apps Script no responde preflight CORS (OPTIONS).
+      const r = await fetch(this.sheetUrl(), {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'book', date: s.date, time: s.time, guests, name, phone, email }),
+      });
+      const d = await r.json();
+      if (d && d.sessions) this.applyData(d, false);
+      if (!d || !d.ok) {
+        this.setState({ submitting: false, formError: (d && d.error) || 'No pudimos guardar la reserva.', step: 'contact' });
+        return;
+      }
+      this.setState({ submitting: false, step: 'done', confirm });
+    } catch (err) {
+      this.setState({ submitting: false, formError: 'No pudimos guardar la reserva. Probá de nuevo o escribinos por WhatsApp.' });
+    }
+  };
+
+  renderVals() {
+    const st = this.state;
+    const price = st.price ?? this.props.sessionPrice ?? 35000;
+    const sessions = st.sessions || [];
+    const narrow = st.narrow;
+
+    const chip = (sel, off, pad) => ({
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+      padding: pad, borderRadius: '14px', cursor: off ? 'not-allowed' : 'pointer',
+      transition: 'background .18s, border-color .18s, color .18s',
+      background: sel ? '#1d1511' : '#ffffff',
+      border: sel ? '1px solid #1d1511' : '1px solid rgba(29,21,17,0.14)',
+      color: sel ? '#f2ece2' : '#1d1511', opacity: off && !sel ? 0.38 : 1,
+    });
+
+    const days = [];
+    sessions.forEach((s) => {
+      let d = days.find((x) => x.date === s.date);
+      if (!d) { d = { date: s.date, avail: 0 }; days.push(d); }
+      d.avail += s.available;
+    });
+    const selDay = st.selectedDay && days.find((d) => d.date === st.selectedDay) ? st.selectedDay : (days[0] && days[0].date);
+    const daySessions = sessions.filter((s) => s.date === selDay);
+    const cur = daySessions.find((s) => s.id === st.selectedId && s.available > 0) || null;
+    const maxAllowed = cur ? Math.max(1, Math.min(this.maxPer(), cur.available)) : 1;
+    const guests = Math.min(st.guests, maxAllowed);
+    this.cur = cur; this.curMax = maxAllowed; this.curGuests = guests; this.curPrice = price;
+
+    const datesView = days.map((d) => ({
+      ...this.dayInfo(d.date), onClick: () => this.selectDay(d.date),
+      wrap: { ...chip(d.date === selDay, d.avail <= 0, '12px 10px'), minWidth: '64px' },
+    }));
+    const timesView = daySessions.map((s) => ({
+      time: s.time,
+      tag: s.available <= 0 ? 'Completo' : s.available === 1 ? 'Queda 1' : 'Quedan ' + s.available,
+      onClick: () => this.selectSession(s),
+      wrap: chip(cur && s.id === cur.id, s.available <= 0, '12px 18px'),
+    }));
+
+    const ready = !st.loading && !st.loadError && st.sessions;
+    const hasAny = ready && sessions.some((s) => s.available > 0);
+    const next = sessions.find((s) => s.available > 0);
+    const c = st.confirm || {};
+
+    const faqs = this.faqData.map((f, i) => {
+      const open = st.openFaq === i;
+      return {
+        ...f,
+        onClick: () => this.setState({ openFaq: open ? -1 : i }),
+        sign: { fontFamily: "'Geist',sans-serif", fontSize: '24px', fontWeight: 300, lineHeight: 1, transition: 'transform .3s', transform: open ? 'rotate(45deg)' : 'none', flexShrink: 0 },
+        wrap: { display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows .35s ease' },
+      };
+    });
+
+    return {
+      navLink: { display: narrow ? 'none' : 'inline', fontSize: '14px' },
+      agendaCols: narrow ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1fr)',
+      stickyCol: narrow ? { display: 'none' } : { position: 'sticky', top: '12vh' },
+      stepBox: narrow
+        ? { padding: '0 0 44px', transition: 'opacity .5s' }
+        : { minHeight: '72vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 0', transition: 'opacity .5s' },
+      inlineImg: narrow ? { width: '100%', marginBottom: '24px' } : { display: 'none' },
+
+      menuOpen: narrow && st.menuOpen,
+      menuLabel: st.menuOpen ? 'Cerrar menú' : 'Abrir menú',
+      toggleMenu: this.toggleMenu, closeMenu: this.closeMenu,
+      navCta: narrow
+        ? { display: 'inline-flex', alignItems: 'center', minHeight: '44px', background: '#1d1511', color: '#f2ece2', padding: '0 18px', borderRadius: '999px', fontWeight: 500, whiteSpace: 'nowrap' }
+        : { background: '#1d1511', color: '#f2ece2', padding: '10px 18px', borderRadius: '999px', fontWeight: 500, whiteSpace: 'nowrap' },
+      burgerBtn: narrow
+        ? { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '44px', height: '44px', borderRadius: '50%', border: '1px solid rgba(29,21,17,0.22)', background: st.menuOpen ? '#1d1511' : 'transparent', cursor: 'pointer', padding: 0, transition: 'background .25s' }
+        : { display: 'none' },
+      bar1: { display: 'block', width: '18px', height: '1.5px', background: st.menuOpen ? '#f2ece2' : '#1d1511', transition: 'transform .3s, background .25s', transform: st.menuOpen ? 'translateY(3.75px) rotate(45deg)' : 'none' },
+      bar2: { display: 'block', width: '18px', height: '1.5px', background: st.menuOpen ? '#f2ece2' : '#1d1511', transition: 'transform .3s, background .25s', transform: st.menuOpen ? 'translateY(-3.75px) rotate(-45deg)' : 'none' },
+      tapLink: narrow ? { display: 'inline-flex', alignItems: 'center', minHeight: '44px' } : {},
+      backBtn: narrow
+        ? { alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', minHeight: '44px', background: 'transparent', border: 'none', padding: '0 12px 0 0', color: '#7a6b5f', fontFamily: "'Geist',sans-serif", fontSize: '14px', cursor: 'pointer' }
+        : { alignSelf: 'flex-start', background: 'transparent', border: 'none', padding: 0, color: '#7a6b5f', fontFamily: "'Geist',sans-serif", fontSize: '14px', cursor: 'pointer' },
+
+      nextLabel: next ? this.dayInfo(next.date).short + ' · ' + next.time : 'Reservá tu lugar',
+      nextSub: next ? (next.available === 1 ? 'Queda 1 lugar' : 'Quedan ' + next.available + ' lugares') : 'Grupos de hasta 6',
+
+      isLoading: !!st.loading && !st.loadError,
+      showError: !!st.loadError,
+      showNotConfigured: !!st.notConfigured && st.step !== 'done',
+      showEmpty: !!ready && !hasAny && st.step !== 'done',
+      isPick: !!hasAny && st.step === 'pick',
+      isContact: !!hasAny && st.step === 'contact',
+      isDone: st.step === 'done',
+      isDemo: !!st.demo,
+
+      priceFmt: this.fmt(price), totalFmt: this.fmt(price * guests),
+      guests, maxLabel: String(maxAllowed),
+      summaryLine: cur ? this.dayInfo(cur.date).full + ' · ' + cur.time + ' · ' + this.seatLabel(guests) : 'Elegí un horario disponible',
+      datesView, timesView,
+      inc: this.inc, dec: this.dec, toContact: this.toContact, toPick: this.toPick, retry: this.retry,
+
+      nameVal: st.name, phoneVal: st.phone, emailVal: st.email,
+      onName: this.onName, onPhone: this.onPhone, onEmail: this.onEmail,
+      hasFormError: !!st.formError, formError: st.formError,
+      submit: this.submit,
+      submitLabel: st.submitting ? 'Reservando…' : 'Confirmar reserva · ' + this.seatLabel(guests),
+      submitStyle: {
+        width: '100%', padding: '18px', border: 'none', borderRadius: '999px', background: '#1d1511', color: '#f2ece2',
+        fontFamily: "'Geist',sans-serif", fontWeight: 500, fontSize: '15.5px',
+        cursor: st.submitting ? 'wait' : 'pointer', opacity: st.submitting ? 0.6 : 1,
+      },
+
+      confirmName: c.name || '', confirmDate: c.date || '', confirmTime: c.time || '',
+      confirmSeats: c.seats || '', confirmTotal: c.total || '', reset: this.reset,
+      faqs,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
